@@ -1,5 +1,5 @@
 import {Facet, ChangeSet, StateField, Annotation, EditorState, StateEffect, Transaction,
-        combineConfig, Extension} from "@codemirror/next/state"
+        combineConfig, Extension} from "@codemirror/state"
 
 /// An update is a set of changes and effects.
 export interface Update {
