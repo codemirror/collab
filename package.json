@@ -1,5 +1,40 @@
 {
+  "name": "@codemirror/collab",
+  "version": "0.17.0",
+  "description": "Collaborative editing for the CodeMirror code editor",
+  "scripts": {
+    "test": "mocha test/test-*.js",
+    "prepare": "tsc && rollup -c"
+  },
+  "keywords": [
+    "editor",
+    "code"
+  ],
+  "author": {
+    "name": "Marijn Haverbeke",
+    "email": "marijnh@gmail.com",
+    "url": "http://marijnhaverbeke.nl"
+  },
+  "type": "module",
   "main": "dist/index.js",
-  "types": "src/collab",
-  "type": "module"
+  "types": "dist/index.d.ts",
+  "module": "dist/index.js",
+  "sideEffects": false,
+  "license": "MIT",
+  "dependencies": {
+    "@codemirror/state": "^0.17.0"
+  },
+  "devDependencies": {
+    "rollup": "^2.35.1",
+    "rollup-plugin-dts": "^2.0.1",
+    "typescript": "^4.1.3",
+    "@codemirror/history": "^0.17.0",
+    "@types/mocha": "^5.2.0",
+    "ist": "^1.1.6",
+    "mocha": "^7.1.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codemirror/collab.git"
+  }
 }
