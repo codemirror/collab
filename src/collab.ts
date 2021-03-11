@@ -66,9 +66,9 @@ const collabField = StateField.define({
     let isSync = tr.annotation(collabReceive)
     if (isSync) return isSync
     let {sharedEffects, clientID} = tr.startState.facet(collabConfig)
-    let update = new LocalUpdate(tr, tr.changes, sharedEffects(tr), clientID)
-    if (update.effects.length || !update.changes.empty)
-      return new CollabState(collab.version, collab.unconfirmed.concat(update))
+    let effects = sharedEffects(tr)
+    if (effects.length || !tr.changes.empty)
+      return new CollabState(collab.version, collab.unconfirmed.concat(new LocalUpdate(tr, tr.changes, effects, clientID)))
     return collab
   }
 })
