@@ -1,12 +1,11 @@
 import {EditorState, Transaction, StateField, StateEffect, Extension, ChangeDesc} from "@codemirror/state"
 import {history, undo, redo, isolateHistory} from "@codemirror/history"
 import ist from "ist"
-import {collab, receiveUpdates, sendableUpdates, Update, getClientID, getSyncedVersion} from "@codemirror/collab"
+import {collab, receiveUpdates, sendableUpdates, Update, getSyncedVersion, getClientID} from "@codemirror/collab"
 
 class DummyServer {
   states: EditorState[] = []
   updates: Update[] = []
-  clientIDs: string[] = []
   delayed: number[] = []
 
   constructor(doc: string = "", config: {n?: number, extensions?: Extension[], collabConf?: any} = {}) {
@@ -15,59 +14,51 @@ class DummyServer {
       this.states.push(EditorState.create({doc, extensions: [history(), collab(collabConf), ...extensions]}))
   }
 
-  sync(n: number) {
-    let state = this.states[n], version = getSyncedVersion(state)
-    if (version != this.updates.length) {
-      let count = 0
-      for (let i = version; i < this.clientIDs.length; i++) {
-        if (this.clientIDs[i] == getClientID(this.states[n])) count++
-        else break
-      }
-      this.states[n] = receiveUpdates(state, this.updates.slice(version), count).state
-    }
+  sync(client: number) {
+    let state = this.states[client], version = getSyncedVersion(state)
+    if (version != this.updates.length)
+      this.states[client] = receiveUpdates(state, this.updates.slice(version)).state
   }
 
-  send(n: number) {
-    let state = this.states[n], sendable = sendableUpdates(state)
-    if (sendable.length) {
+  send(client: number) {
+    let state = this.states[client], sendable = sendableUpdates(state)
+    if (sendable.length)
       this.updates = this.updates.concat(sendable)
-      for (let i = 0; i < sendable.length; i++) this.clientIDs.push(getClientID(state))
-    }
   }
 
-  broadcast(n: number) {
-    if (this.delayed.indexOf(n) > -1) return
-    this.sync(n)
-    this.send(n)
-    for (let i = 0; i < this.states.length; i++) if (i != n) this.sync(i)
+  broadcast(client: number) {
+    if (this.delayed.indexOf(client) > -1) return
+    this.sync(client)
+    this.send(client)
+    for (let i = 0; i < this.states.length; i++) if (i != client) this.sync(i)
   }
 
-  update(n: number, f: (state: EditorState) => Transaction) {
-    this.states[n] = f(this.states[n]).state
-    this.broadcast(n)
+  update(client: number, f: (state: EditorState) => Transaction) {
+    this.states[client] = f(this.states[client]).state
+    this.broadcast(client)
   }
 
-  type(n: number, text: string, pos: number = this.states[n].selection.main.head) {
-    this.update(n, s => s.update({changes: {from: pos, insert: text}, selection: {anchor: pos + text.length}}))
+  type(client: number, text: string, pos: number = this.states[client].selection.main.head) {
+    this.update(client, s => s.update({changes: {from: pos, insert: text}, selection: {anchor: pos + text.length}}))
   }
 
-  undo(n: number) {
-    undo({state: this.states[n], dispatch: tr => this.update(n, () => tr)})
+  undo(client: number) {
+    undo({state: this.states[client], dispatch: tr => this.update(client, () => tr)})
   }
 
-  redo(n: number) {
-    redo({state: this.states[n], dispatch: tr => this.update(n, () => tr)})
+  redo(client: number) {
+    redo({state: this.states[client], dispatch: tr => this.update(client, () => tr)})
   }
 
   conv(doc: string) {
     this.states.forEach(state => ist(state.doc.toString(), doc))
   }
 
-  delay(n: number, f: () => void) {
-    this.delayed.push(n)
+  delay(client: number, f: () => void) {
+    this.delayed.push(client)
     f()
     this.delayed.pop()
-    this.broadcast(n)
+    this.broadcast(client)
   }
 }
 
@@ -214,8 +205,8 @@ describe("collab", () => {
     s.conv("A B")
   })
 
-  it("allows you to set your client id", () => {
-    ist(getClientID(EditorState.create({extensions: [collab({clientID: "my id"})]})), "my id")
+  it("allows you to set the initial version", () => {
+    ist(getSyncedVersion(EditorState.create({extensions: [collab({startVersion: 20})]})), 20)
   })
 
   it("client ids survive reconfiguration", () => {

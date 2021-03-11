@@ -6,30 +6,26 @@ export interface Update {
   /// The changes made by this update.
   changes: ChangeSet,
   /// The effects in this update. There'll only ever be effects here
-  /// when you configured your collab extension with a
+  /// when you configure your collab extension with a
   /// [`sharedEffects`](#collab.collab^config.sharedEffects) option.
   effects?: readonly StateEffect<any>[]
+  /// The [ID](#collab.CollabConfig.clientID) of the client who
+  /// created this update.
+  clientID: string
 }
 
 class LocalUpdate implements Update {
   constructor(
     readonly origin: Transaction,
     readonly changes: ChangeSet,
-    readonly effects: readonly StateEffect<any>[]
+    readonly effects: readonly StateEffect<any>[],
+    readonly clientID: string
   ) {}
 }
 
-// This state field accumulates updates that have to be sent to the
-// central authority in the collaborating group and makes it possible
-// to integrate updates made by peers into our local document. It is
-// defined by the plugin, and will be available as the `collab` field
-// in the resulting editor state.
 class CollabState {
   constructor(
-    // The version number of the last update received from the central
-    // authority. Starts at 0 or the value of the `version` property
-    // in the option object, for the editor's value when the option
-    // was enabled.
+    // The version up to which changes have been confirmed.
     readonly version: number,
     // The local updates that havent been successfully sent to the
     // server yet.
@@ -37,7 +33,7 @@ class CollabState {
 }
 
 type CollabConfig = {
-  /// The starting document version. Will default to 0.
+  /// The starting document version. Defaults to 0.
   startVersion?: number,
   /// This client's identifying [ID](#collab.getClientID). Will be a
   /// randomly generated string if not provided.
@@ -51,14 +47,11 @@ type CollabConfig = {
   sharedEffects?: (tr: Transaction) => readonly StateEffect<any>[]
 }
 
-type FullConfig = {startVersion: number, clientID: string, sharedEffects: CollabConfig["sharedEffects"] | null}
-
-const collabConfig = Facet.define<CollabConfig & {generatedID: string}, FullConfig>({
-  combine(configs: readonly (CollabConfig & {generatedID: string})[]) {
-    let combined = combineConfig<FullConfig>(configs, {startVersion: 0, clientID: "", sharedEffects: null})
-    return {startVersion: combined.startVersion,
-            clientID: combined.clientID || (configs.length && configs[0].generatedID) || "",
-            sharedEffects: combined.sharedEffects}
+const collabConfig = Facet.define<CollabConfig & {generatedID: string}, Required<CollabConfig>>({
+  combine(configs) {
+    let combined = combineConfig(configs, {startVersion: 0, clientID: null as any, sharedEffects: () => []})
+    if (combined.clientID == null) combined.clientID = (configs.length && configs[0].generatedID) || ""
+    return combined
   }
 })
 
@@ -72,8 +65,8 @@ const collabField = StateField.define({
   update(collab: CollabState, tr: Transaction) {
     let isSync = tr.annotation(collabReceive)
     if (isSync) return isSync
-    let {sharedEffects} = tr.startState.facet(collabConfig)
-    let update = new LocalUpdate(tr, tr.changes, sharedEffects ? sharedEffects(tr) : [])
+    let {sharedEffects, clientID} = tr.startState.facet(collabConfig)
+    let update = new LocalUpdate(tr, tr.changes, sharedEffects(tr), clientID)
     if (update.effects.length || !update.changes.empty)
       return new CollabState(collab.version, collab.unconfirmed.concat(update))
     return collab
@@ -82,37 +75,26 @@ const collabField = StateField.define({
 
 /// Create an instance of the collaborative editing plugin.
 export function collab(config: CollabConfig = {}): Extension {
-  return [
-    collabField,
-    collabConfig.of({startVersion: config.startVersion,
-                     clientID: config.clientID,
-                     sharedEffects: config.sharedEffects,
-                     generatedID: Math.floor(Math.random() * 0xFFFFFFFF).toString(16)})
-  ]
+  return [collabField, collabConfig.of({generatedID: Math.floor(Math.random() * 1e9).toString(36), ...config})]
 }
 
 /// Create a transaction that represents a set of new updates received
 /// from the authority. Applying this transaction moves the state
 /// forward to adjust to the authority's view of the document.
-export function receiveUpdates(
-  state: EditorState,
-  updates: readonly Update[],
-  /// This should be equal to the number of updates (at the start of
-  /// the `updates` array) that came from this client itself. (This is
-  /// one of the things you'll want to use the [client
-  /// ID](#collab.getClientID) for.)
-  ownUpdateCount: number
-) {
-  // Pushes a set of updates (received from the central authority)
-  // into the editor state (which should have the collab plugin
-  // enabled). Will recognize its own updates, and confirm unconfirmed
-  // updates as appropriate. Remaining unconfirmed updates will be
-  // rebased over remote changes.
-  let collabState = state.field(collabField)
-  let version = collabState.version + updates.length
+export function receiveUpdates(state: EditorState, updates: readonly Update[]) {
+  let {version, unconfirmed} = state.field(collabField)
+  let {clientID} = state.facet(collabConfig)
 
-  let unconfirmed = collabState.unconfirmed.slice(ownUpdateCount)
-  if (ownUpdateCount) updates = updates.slice(ownUpdateCount)
+  version += updates.length
+
+  let own = 0
+  // FIXME backwards-compatibility kludge. Remove in a few versions.
+  if (updates[0].clientID == null) own = arguments[2]
+  else while (own < updates.length && updates[own].clientID == clientID) own++
+  if (own) {
+    unconfirmed = unconfirmed.slice(own)
+    updates = updates.slice(own)
+  }
 
   // If all updates originated with us, we're done.
   if (!updates.length)
@@ -127,13 +109,11 @@ export function receiveUpdates(
   }
   
   if (unconfirmed.length) {
-    let newUnconfirmed = []
-    for (let update of unconfirmed) {
+    unconfirmed = unconfirmed.map(update => {
       let updateChanges = update.changes.map(changes)
       changes = changes.map(update.changes, true)
-      newUnconfirmed.push(new LocalUpdate(update.origin, updateChanges, StateEffect.mapEffects(update.effects, changes)))
-    }
-    unconfirmed = newUnconfirmed
+      return new LocalUpdate(update.origin, updateChanges, StateEffect.mapEffects(update.effects, changes), clientID)
+    })
     effects = StateEffect.mapEffects(effects, unconfirmed.reduce((ch, u) => ch.compose(u.changes),
                                                                  ChangeSet.empty(unconfirmed[0].changes.length)))
   }
