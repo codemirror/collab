@@ -1,3 +1,9 @@
+## 0.18.1 (2021-03-12)
+
+### Breaking changes
+
+`Update` objects now have a `clientID` field, and `receiveUpdates` no longer takes its `ownUpdateCount` argument, to simplify the interface.
+
 ## 0.18.0 (2021-03-03)
 
 ### Breaking changes
