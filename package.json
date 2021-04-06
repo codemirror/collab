@@ -26,7 +26,7 @@
   "sideEffects": false,
   "license": "MIT",
   "dependencies": {
-    "@codemirror/state": "^0.18.0"
+    "@codemirror/state": "^0.18.4"
   },
   "devDependencies": {
     "@codemirror/buildhelper": "^0.1.0",

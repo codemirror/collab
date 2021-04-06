@@ -122,6 +122,7 @@ export function receiveUpdates(state: EditorState, updates: readonly Update[]) {
     effects,
     annotations: [
       Transaction.addToHistory.of(false),
+      Transaction.remote.of(true),
       collabReceive.of(new CollabState(version, unconfirmed))
     ],
     filter: false
