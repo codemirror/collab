@@ -1,3 +1,9 @@
+## 0.18.2 (2021-04-06)
+
+### Bug fixes
+
+Add `Transaction.remote` annotation to transactions that include remote updates.
+
 ## 0.18.1 (2021-03-12)
 
 ### Breaking changes
