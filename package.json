@@ -3,7 +3,7 @@
   "version": "0.18.2",
   "description": "Collaborative editing for the CodeMirror code editor",
   "scripts": {
-    "test": "mocha test/test-*.js",
+    "test": "cm-runtests",
     "prepare": "cm-buildhelper src/collab.ts"
   },
   "keywords": [
@@ -29,11 +29,8 @@
     "@codemirror/state": "^0.18.4"
   },
   "devDependencies": {
-    "@codemirror/buildhelper": "^0.1.0",
-    "@codemirror/history": "^0.18.0",
-    "@types/mocha": "^5.2.0",
-    "ist": "^1.1.6",
-    "mocha": "^7.1.1"
+    "@codemirror/buildhelper": "^0.1.5",
+    "@codemirror/history": "^0.18.0"
   },
   "repository": {
     "type": "git",
