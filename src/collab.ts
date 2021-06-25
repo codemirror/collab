@@ -88,9 +88,7 @@ export function receiveUpdates(state: EditorState, updates: readonly Update[]) {
   version += updates.length
 
   let own = 0
-  // FIXME backwards-compatibility kludge. Remove in a few versions.
-  if (updates[0].clientID == null) own = arguments[2]
-  else while (own < updates.length && updates[own].clientID == clientID) own++
+  while (own < updates.length && updates[own].clientID == clientID) own++
   if (own) {
     unconfirmed = unconfirmed.slice(own)
     updates = updates.slice(own)
