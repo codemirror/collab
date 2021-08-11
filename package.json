@@ -1,6 +1,6 @@
 {
   "name": "@codemirror/collab",
-  "version": "0.18.2",
+  "version": "0.19.0",
   "description": "Collaborative editing for the CodeMirror code editor",
   "scripts": {
     "test": "cm-runtests",
@@ -26,11 +26,11 @@
   "sideEffects": false,
   "license": "MIT",
   "dependencies": {
-    "@codemirror/state": "^0.18.4"
+    "@codemirror/state": "^0.19.0"
   },
   "devDependencies": {
     "@codemirror/buildhelper": "^0.1.5",
-    "@codemirror/history": "^0.18.0"
+    "@codemirror/history": "^0.19.0"
   },
   "repository": {
     "type": "git",
