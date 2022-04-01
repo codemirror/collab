@@ -9,7 +9,7 @@ export interface Update {
   /// when you configure your collab extension with a
   /// [`sharedEffects`](#collab.collab^config.sharedEffects) option.
   effects?: readonly StateEffect<any>[]
-  /// The [ID](#collab.CollabConfig.clientID) of the client who
+  /// The [ID](#collab.collab^config.clientID) of the client who
   /// created this update.
   clientID: string
 }
