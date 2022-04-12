@@ -1,5 +1,5 @@
 import {EditorState, Transaction, StateField, StateEffect, Extension, ChangeDesc} from "@codemirror/state"
-import {history, undo, redo, isolateHistory} from "@codemirror/history"
+import {history, undo, redo, isolateHistory} from "@codemirror/commands"
 import ist from "ist"
 import {collab, receiveUpdates, sendableUpdates, Update, getSyncedVersion, getClientID} from "@codemirror/collab"
 

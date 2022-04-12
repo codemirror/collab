@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "@codemirror/buildhelper": "^0.1.5",
-    "@codemirror/history": "^0.19.0"
+    "@codemirror/commands": "^0.19.0"
   },
   "repository": {
     "type": "git",
