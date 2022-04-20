@@ -1,3 +1,9 @@
+## 0.20.0 (2022-04-20)
+
+### Breaking changes
+
+Update dependencies to 0.20.0
+
 ## 0.19.0 (2021-08-11)
 
 ### Breaking changes
