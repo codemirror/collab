@@ -1,6 +1,6 @@
 # @codemirror/collab [![NPM version](https://img.shields.io/npm/v/@codemirror/collab.svg)](https://www.npmjs.org/package/@codemirror/collab)
 
-[ [**WEBSITE**](https://codemirror.net/) | [**DOCS**](https://codemirror.net/docs/ref/#collab) | [**ISSUES**](https://github.com/codemirror/codemirror.next/issues) | [**FORUM**](https://discuss.codemirror.net/c/next/) | [**CHANGELOG**](https://github.com/codemirror/collab/blob/main/CHANGELOG.md) ]
+[ [**WEBSITE**](https://codemirror.net/) | [**DOCS**](https://codemirror.net/docs/ref/#collab) | [**ISSUES**](https://github.com/codemirror/dev/issues) | [**FORUM**](https://discuss.codemirror.net/c/next/) | [**CHANGELOG**](https://github.com/codemirror/collab/blob/main/CHANGELOG.md) ]
 
 This package implements collaborative editing for the
 [CodeMirror](https://codemirror.net/) code editor.
