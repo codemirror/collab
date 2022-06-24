@@ -171,11 +171,11 @@ describe("collab", () => {
       s.type(0, "D", 0)
       s.update(1, s => s.update({changes: {from: 1, to: 4}}))
     })
-    s.conv("Do!A")
+    s.conv("DoBC!A")
     s.undo(0)
     s.undo(0)
-    s.conv("o!")
-    ist(s.states[0].selection.main.head, 0)
+    s.conv("o!A")
+    ist(s.states[0].selection.main.head, 3)
   })
 
   it("handles conflicting steps", () => {
@@ -187,7 +187,7 @@ describe("collab", () => {
     })
     s.undo(0)
     s.undo(0)
-    s.conv("ae")
+    s.conv("ace")
   })
 
   it("can undo simultaneous typing", () => {
