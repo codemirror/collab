@@ -1,6 +1,6 @@
 {
   "name": "@codemirror/collab",
-  "version": "6.0.0",
+  "version": "6.1.0",
   "description": "Collaborative editing for the CodeMirror code editor",
   "scripts": {
     "test": "cm-runtests",

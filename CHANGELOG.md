@@ -1,3 +1,11 @@
+## 6.1.0 (2023-08-22)
+
+### New features
+
+The new `rebaseUpdates` function can be used by a collaborative editing server to accept updates even if they apply to an old document version.
+
+`receiveUpdates` is now able to handle updates that were rebased by the server.
+
 ## 6.0.0 (2022-06-08)
 
 ### Breaking changes
