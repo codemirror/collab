@@ -1,5 +1,5 @@
-import {Facet, ChangeSet, StateField, Annotation, EditorState, StateEffect, Transaction,
-        combineConfig, Extension} from "@codemirror/state"
+import {Facet, ChangeSet, ChangeDesc, StateField, Annotation, EditorState, StateEffect,
+        Transaction, combineConfig, Extension} from "@codemirror/state"
 
 /// An update is a set of changes and effects.
 export interface Update {
@@ -86,37 +86,41 @@ export function receiveUpdates(state: EditorState, updates: readonly Update[]) {
   let {clientID} = state.facet(collabConfig)
 
   version += updates.length
+  let effects: readonly StateEffect<any>[] = [], changes = null
 
   let own = 0
-  while (own < updates.length && updates[own].clientID == clientID) own++
-  if (own) {
-    unconfirmed = unconfirmed.slice(own)
-    updates = updates.slice(own)
+  for (let update of updates) {
+    let ours = own < unconfirmed.length ? unconfirmed[own] : null
+    if (ours && ours.clientID == update.clientID) {
+      if (changes) changes = changes.map(ours.changes, true)
+      effects = StateEffect.mapEffects(effects, update.changes)
+      own++
+    } else {
+      effects = StateEffect.mapEffects(effects, update.changes)
+      if (update.effects) effects = effects.concat(update.effects)
+      changes = changes ? changes.compose(update.changes) : update.changes
+    }
   }
 
-  // If all updates originated with us, we're done.
-  if (!updates.length)
+  if (own) unconfirmed = unconfirmed.slice(own)
+  if (unconfirmed.length) {
+    if (changes) unconfirmed = unconfirmed.map(update => {
+      let updateChanges = update.changes.map(changes!)
+      changes = changes!.map(update.changes, true)
+      return new LocalUpdate(update.origin, updateChanges, StateEffect.mapEffects(update.effects, changes!), clientID)
+    })
+    if (effects.length) {
+      let composed = unconfirmed.reduce((ch, u) => ch.compose(u.changes),
+                                        ChangeSet.empty(unconfirmed[0].changes.length))
+      effects = StateEffect.mapEffects(effects, composed)
+    }
+  }
+
+  if (!changes)
     return state.update({annotations: [collabReceive.of(new CollabState(version, unconfirmed))]})
 
-  let changes = updates[0].changes, effects = updates[0].effects || []
-  for (let i = 1; i < updates.length; i++) {
-    let update = updates[i]
-    effects = StateEffect.mapEffects(effects, update.changes)
-    if (update.effects) effects = effects.concat(update.effects)
-    changes = changes.compose(update.changes)
-  }
-  
-  if (unconfirmed.length) {
-    unconfirmed = unconfirmed.map(update => {
-      let updateChanges = update.changes.map(changes)
-      changes = changes.map(update.changes, true)
-      return new LocalUpdate(update.origin, updateChanges, StateEffect.mapEffects(update.effects, changes), clientID)
-    })
-    effects = StateEffect.mapEffects(effects, unconfirmed.reduce((ch, u) => ch.compose(u.changes),
-                                                                 ChangeSet.empty(unconfirmed[0].changes.length)))
-  }
   return state.update({
-    changes,
+    changes: changes,
     effects,
     annotations: [
       Transaction.addToHistory.of(false),
@@ -147,4 +151,36 @@ export function getSyncedVersion(state: EditorState) {
 /// Get this editor's collaborative editing client ID.
 export function getClientID(state: EditorState) {
   return state.facet(collabConfig).clientID
+}
+
+/// Rebase and deduplicate an array of client-submitted updates that
+/// came in with an out-of-date version number. `over` should hold the
+/// updates that were accepted since the given version (or at least
+/// their change descs and client IDs). Will return an array of
+/// updates that, firstly, has updates that were already accepted
+/// filtered out, and secondly, has been moved over the other changes
+/// so that they apply to the current document version.
+export function rebaseUpdates(updates: readonly Update[], over: readonly {changes: ChangeDesc, clientID: string}[]) {
+  if (!over.length || !updates.length) return updates
+  let changes: ChangeDesc | null = null, skip = 0
+  for (let update of over) {
+    let other = skip < updates.length ? updates[skip] : null
+    if (other && other.clientID == update.clientID) {
+      if (changes) changes = changes.mapDesc(other.changes, true)
+      skip++
+    } else {
+      changes = changes ? changes.composeDesc(update.changes) : update.changes
+    }
+  }
+
+  if (skip) updates = updates.slice(skip)
+  return !changes ? updates : updates.map(update => {
+    let updateChanges = update.changes.map(changes!)
+    changes = changes!.mapDesc(update.changes, true)
+    return {
+      changes: updateChanges,
+      effects: update.effects && StateEffect.mapEffects(update.effects, changes!),
+      clientID: update.clientID
+    }
+  })
 }

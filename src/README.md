@@ -16,6 +16,8 @@ more detailed description of the protocol.
 
 @sendableUpdates
 
+@rebaseUpdates
+
 @getSyncedVersion
 
 @getClientID
