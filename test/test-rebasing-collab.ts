@@ -1,4 +1,4 @@
-import {EditorState, Transaction, Text, StateCommand} from "@codemirror/state"
+import {EditorState, Text, StateCommand} from "@codemirror/state"
 import {history, undo} from "@codemirror/commands"
 import ist from "ist"
 import {collab, receiveUpdates, sendableUpdates, rebaseUpdates, Update, getSyncedVersion} from "@codemirror/collab"
