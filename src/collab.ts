@@ -49,7 +49,9 @@ type CollabConfig = {
 
 const collabConfig = Facet.define<CollabConfig & {generatedID: string}, Required<CollabConfig>>({
   combine(configs) {
-    let combined = combineConfig(configs, {startVersion: 0, clientID: null as any, sharedEffects: () => []})
+    let combined = combineConfig(configs, {startVersion: 0, clientID: null as any, sharedEffects: () => []}, {
+      generatedID: a => a
+    })
     if (combined.clientID == null) combined.clientID = (configs.length && configs[0].generatedID) || ""
     return combined
   }
