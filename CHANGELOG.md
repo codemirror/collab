@@ -1,3 +1,9 @@
+## 6.1.1 (2023-09-14)
+
+### Bug fixes
+
+Fix an issue where the configuration process raised an error when multiple instances of the `collab` extensions were added.
+
 ## 6.1.0 (2023-08-22)
 
 ### New features
